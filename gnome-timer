@@ -206,13 +206,13 @@ class TreeViewFilterWindow(Gtk.Window):
         self.add(self.grid)
 
         # Creating the ListStore model
-        self.software_liststore = Gtk.ListStore(str, str, str)
+        self.systemd_liststore = Gtk.ListStore(str, str, str)
         for software_ref in software_list:
-            self.software_liststore.append(list(software_ref))
+            self.systemd_liststore.append(list(software_ref))
         self.current_filter_language = None
 
         # Creating the filter, feeding it with the liststore model
-        self.language_filter = self.software_liststore.filter_new()
+        self.language_filter = self.systemd_liststore.filter_new()
         # setting the filter function, note that we're not using the
         self.language_filter.set_visible_func(self.language_filter_func)
 
