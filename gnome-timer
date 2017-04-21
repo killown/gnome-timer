@@ -15,15 +15,41 @@ __author__ = "Thiago Lucio"
 __license__ = "GPL"
 __email__ = "systemofdown@gmail.com"
 
-
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+import subprocess
 import os
 import getpass
 
 user = getpass.getuser()
 display = os.environ['DISPLAY']
+
+timer_list = [i for i in os.listdir(
+    '/home/' + user + '/.local/share/systemd/user') if '.timer' in i]
+
+systemd_path = os.path.join('/home/' + user + '/.local/share/systemd/user/')
+
+
+def systemctl(action, unit):
+    outputCMD = subprocess.Popen(['systemctl', '--user', action,
+                                  unit], stdout=subprocess.PIPE)
+    return outputCMD.stdout.readlines()
+
+
+def get_description(unit):
+    timer = systemd_path + unit
+    with open(timer, 'r', encoding="utf-8") as f:
+        for i in f.readlines():
+            if 'Description' in i:
+                return i.partition('Description=')[-1]
+print(get_description('tomaragua.timer').rstrip(), get_description('tomaragua.timer').rstrip())
+d = []
+for i in timer_list:
+    d.append((str(i.partition('.timer')[0]), str(systemctl('is-active', i)[0]).partition("b'")[2].partition("\\")[0],
+              str(get_description(i)).rstrip()))
+print(d)
+software_list = d
 
 
 def systemd_save(content, service, timer):
@@ -166,7 +192,103 @@ class Assistant(Gtk.Assistant):
     def on_cancel_clicked(self, *args):
         Gtk.main_quit()
 
-assistant = Assistant()
-assistant.show_all()
 
+class TreeViewFilterWindow(Gtk.Window):
+
+    def __init__(self):
+        Gtk.Window.__init__(self, title="Gnome Timer")
+        self.set_border_width(10)
+
+        # Setting up the self.grid in which the elements are to be positionned
+        self.grid = Gtk.Grid()
+        self.grid.set_column_homogeneous(True)
+        self.grid.set_row_homogeneous(True)
+        self.add(self.grid)
+
+        # Creating the ListStore model
+        self.software_liststore = Gtk.ListStore(str, str, str)
+        for software_ref in software_list:
+            self.software_liststore.append(list(software_ref))
+        self.current_filter_language = None
+
+        # Creating the filter, feeding it with the liststore model
+        self.language_filter = self.software_liststore.filter_new()
+        # setting the filter function, note that we're not using the
+        self.language_filter.set_visible_func(self.language_filter_func)
+
+        # creating the treeview, making it use the filter as a model, and adding the columns
+        self.treeview = Gtk.TreeView.new_with_model(self.language_filter)
+        self.select = self.treeview.get_selection()
+        self.select.connect("changed", self.on_tree_selection_changed)
+
+        for i, column_title in enumerate(["Timer", "Status", "Description"]):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(column_title, renderer, text=i)
+            self.treeview.append_column(column)
+
+        # creating buttons to filter by programming language, and setting up their events
+        self.buttons = list()
+        for prog_language in ["New", "Start", "Stop", "Edit Timer", "Edit Service", "Remove"]:
+            button = Gtk.Button(prog_language)
+            self.buttons.append(button)
+            button.connect("clicked", self.on_selection_button_clicked)
+        # setting up the layout, putting the treeview in a scrollwindow, and the buttons in a row
+        self.scrollable_treelist = Gtk.ScrolledWindow()
+        self.scrollable_treelist.set_vexpand(True)
+        self.grid.attach(self.scrollable_treelist, 0, 0, 8, 10)
+        self.grid.attach_next_to(
+            self.buttons[0], self.scrollable_treelist, Gtk.PositionType.BOTTOM, 1, 1)
+        for i, button in enumerate(self.buttons[1:]):
+            self.grid.attach_next_to(button, self.buttons[i], Gtk.PositionType.RIGHT, 1, 1)
+        self.scrollable_treelist.add(self.treeview)
+
+        self.show_all()
+
+    def on_tree_selection_changed(self, selection):
+        model, treeiter = selection.get_selected()
+        if treeiter != None:
+            global selected
+            selected = model[treeiter][0]
+            print("You selected", model[treeiter][0])
+
+    def language_filter_func(self, model, iter, data):
+        """Tests if the language in the row is the one in the filter"""
+        if self.current_filter_language is None or self.current_filter_language == "None":
+            return True
+        else:
+            return model[iter][2] == self.current_filter_language
+
+    def on_selection_button_clicked(self, widget):
+        """Called on any of the button clicks"""
+        # we set the current language filter to the button's label
+        button = widget.get_label()
+        if button == "New":
+            assistant = Assistant()
+            assistant.show_all()
+        if button == "Stop":
+            systemctl('stop', selected + ".timer")
+            print(selected, 'asdfasdfasdf')
+        if button == "Start":
+            systemctl('start', selected + ".timer")
+            print(selected, 'asdfasdfasdf')
+        if button == "Edit Timer":
+            subprocess.Popen(['xdg-open', os.path.join(systemd_path, selected + ".timer")])
+            print(selected, 'asdfasdfasdf')
+
+        if button == "Edit Service":
+            subprocess.Popen(['xdg-open', os.path.join(systemd_path, selected + ".service")])
+            print(selected, 'asdfasdfasdf')
+
+        if button == "Remove":
+            systemctl('disable', selected + ".timer")
+            os.remove(os.path.join(systemd_path, selected + ".service"))
+            os.remove(os.path.join(systemd_path, selected + ".timer"))
+            print(selected, 'asdfasdfasdf')
+
+        print("%s language selected!" % button)
+
+
+win = TreeViewFilterWindow()
+win.connect("delete-event", Gtk.main_quit)
+win.show_all()
 Gtk.main()
