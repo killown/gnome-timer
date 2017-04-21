@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+__author__ = "Thiago Lucio"
+__license__ = "GPL"
+__email__ = "systemofdown@gmail.com"
+
+
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+import os
+import getpass
+
+user = getpass.getuser()
+display = os.environ['DISPLAY']
+
+
+def systemd_save(content, service, timer):
+    timer_file = "{0}.timer".format(timer)
+    timer_file = os.path.join('/home/' + user + '/.local/share/systemd/user/' + timer_file)
+    with open(timer_file, 'w') as f:
+        f.write(content[1])
+        f.close()
+    service_file = "{0}.service".format(service)
+    service_file = os.path.join('/home/' + user + '/.local/share/systemd/user/' + service_file)
+    with open(service_file, 'w') as f:
+        f.write(content[0])
+        f.close()
+
+
+def systemd_timer(description_time, description_service, display,
+                  service_type, execstart, time):
+    service = """
+    [Unit]
+    Description={0}
+
+    [Service]
+    Type={1}
+    Environment="DISPLAY={2}" "XAUTHORITY=/home/{3}/.Xauthority"
+    ExecStart={4}
+    [Install]
+    WantedBy=default.target  """.format(description_service, service_type,
+                                        display, user, execstart)
+
+    timer = """
+    [Unit]
+    Description={0}
+
+    [Timer]
+    OnCalendar={1}
+    [Install]
+    WantedBy=default.target""".format(description_time, time)
+    return service, timer
+
+
+class Assistant(Gtk.Assistant):
+
+    def __init__(self):
+        Gtk.Assistant.__init__(self)
+        self.set_title("Assistant")
+        self.set_default_size(640, 100)
+        self.connect("cancel", self.on_cancel_clicked)
+        self.connect("close", self.on_close_clicked)
+        self.connect("apply", self.on_apply_clicked)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.INTRO)
+        self.set_page_title(box, "Timer Description")
+        self.description_timer = Gtk.Entry()
+        self.description_timer.set_text("Timer Description")
+        self.Filename_timer = Gtk.Entry()
+        self.Filename_timer.set_text("filename")
+        label = Gtk.Label(label="filename: <foobar> will result foobar.timer")
+        label.set_line_wrap(True)
+        box.pack_start(label, True, True, 0)
+        box.pack_start(self.description_timer, True, True, 0)
+        box.pack_start(self.Filename_timer, True, True, 0)
+
+        self.set_page_complete(box, True)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
+        self.set_page_title(box, "Time & Date")
+        self.time = Gtk.Entry()
+        self.time.set_text("<Time & Date>")
+        label = Gtk.Label()
+        label.set_markup("Examples for valid time span specifications:\n"
+                         "2 h 2hours 48hr 1y 12month 55s500ms 300ms20s 5day\n"
+                         "Fri 2012 - 11 - 23 11: 12: 13\n"
+                         "'minutely', 'hourly', 'daily', 'monthly', 'weekly'\n"
+                         "for more help visit <a href=\"https://www.freedesktop.org/software/systemd/man/systemd.time.html\" "
+                         "title=\"Click to find out more\">freedesktop</a>.")
+        label.set_line_wrap(True)
+        box.pack_start(label, True, True, 0)
+        box.pack_start(self.time, True, True, 0)
+        self.set_page_complete(box, True)
+
+        self.complete = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(self.complete)
+        self.set_page_type(self.complete, Gtk.AssistantPageType.CONFIRM)
+        self.set_page_title(self.complete, "Command")
+        self.description_command = Gtk.Entry()
+        self.description_command.set_text("Description")
+        self.Filename_service = Gtk.Entry()
+        self.Filename_service.set_text("filename")
+        self.command = Gtk.Entry()
+        self.command.set_text("Command")
+        label = Gtk.Label(label="""
+        Filename: < foobar > will result in foobar.service
+        Service Type: < simple > <notify >
+        Command: use full path
+        Description: command description""")
+        label.set_line_wrap(True)
+        self.service_type = Gtk.Entry()
+        self.service_type.set_text("simple")
+        self.complete.pack_start(label, True, True, 0)
+        self.complete.pack_start(self.Filename_service, True, True, 0)
+        self.complete.pack_start(self.service_type, True, True, 0)
+        self.complete.pack_start(self.command, True, True, 0)
+        self.complete.pack_start(self.description_command, True, True, 0)
+        self.set_page_complete(self.complete, True)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.SUMMARY)
+        self.set_page_title(box, "Summary")
+        self.label = Gtk.Label(label="")
+        label.set_line_wrap(True)
+        box.pack_start(self.label, True, True, 0)
+        self.set_page_complete(box, True)
+
+    def on_apply_clicked(self, *args):
+        file_location = os.path.join('/home/' + user + '/.local/share/systemd/user/')
+        description_timer = self.description_timer.get_text()
+        description_service = self.description_command.get_text()
+        execstart = self.command.get_text()
+        service_type = self.service_type.get_text()
+        service_filename = self.Filename_service.get_text() + '.service'
+        timer_filename = self.Filename_timer.get_text() + '.timer'
+        time = self.time.get_text()
+        if time == "<Time & Date>":
+            time = 0
+        content = systemd_timer(description_timer, description_service, display,
+                                service_type, execstart, time)
+        self.label.set_text(file_location + '\n' + service_filename + content[0] + '\n' +
+                            timer_filename + content[1])
+        systemd_save(content, self.Filename_service.get_text(),
+                     self.Filename_timer.get_text())
+
+    def on_close_clicked(self, *args):
+        Gtk.main_quit()
+
+    def on_cancel_clicked(self, *args):
+        Gtk.main_quit()
+
+assistant = Assistant()
+assistant.show_all()
+
+Gtk.main()
