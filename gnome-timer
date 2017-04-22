@@ -21,11 +21,19 @@ from gi.repository import Gtk, GLib, GObject
 import subprocess
 from subprocess import Popen
 import os
-
+import getpass
+user = getpass.getuser()
 display = os.environ['DISPLAY']
 user_data_dir = GLib.get_user_data_dir()
 systemd_path = os.path.join(user_data_dir + '/systemd/user/')
-systemd_path_list = [f for f in os.listdir(systemd_path) if '.timer' in f]
+
+systemd_timer_list = []
+for timer in os.listdir(systemd_path):
+    service = timer.split('.timer')[0] + ".service"
+    if '.timer' in timer:
+        # if unit.timer exist then unit.service must exist also.
+        if os.path.exists(systemd_path + service):
+            systemd_timer_list.append(timer)
 
 
 def systemctl(action, unit):
@@ -41,6 +49,7 @@ def get_description(unit):
     # convert to unit.service
     else:
         unit = systemd_path + unit.partition('.')[0] + '.service'
+
     with open(unit, 'r', encoding="utf-8") as f:
         for i in f.readlines():
             if 'Description' in i:
@@ -70,7 +79,7 @@ def get_execstart(unit):
 
 def systemd_files(systemd_list):
 
-    for i in systemd_path_list:
+    for i in systemd_timer_list:
         systemd_list.append((str(i.partition('.timer')[0]),
                              str(systemctl('is-active', i)[0]
                                  ).partition("b'")[2].partition("\\")[0],
@@ -87,7 +96,6 @@ def systemd_new_file(systemd_list, unit):
                          str(get_description(unit)).rstrip(),
                          str(get_calendar(unit)).rstrip(),
                          str(get_execstart(unit)).rstrip()))
-    print(systemd_list)
     return systemd_list
 
 
@@ -310,6 +318,7 @@ class TreeViewFilterWindow(Gtk.Window):
 
     def on_tree_selection_changed(self, selection):
         self.model, self.treeiter = selection.get_selected()
+        path = self.model.get_path(self.treeiter)
         if self.treeiter != None:
             global selected
             selected = self.model[self.treeiter][0]
@@ -356,15 +365,15 @@ class TreeViewFilterWindow(Gtk.Window):
             Popen(['xdg-open', os.path.join(systemd_path, selected + ".service")])
 
         if button == "Remove":
-            if self.treeiter != None:
-                self.systemd_liststore.remove(self.treeiter)
-                return
-
-            systemctl('disable', selected + ".timer")
             os.remove(os.path.join(systemd_path, selected + ".service"))
             os.remove(os.path.join(systemd_path, selected + ".timer"))
+            if self.treeiter != None:
+                path = self.model.get_path(self.treeiter)
+                # liststore starts with 1 and path list with 0
 
-        print("%s language selected!" % button)
+                row_path = path.get_indices()[0] + 1
+                self.systemd_liststore.remove(self.systemd_liststore[path].iter)
+                systemctl('disable', selected + ".timer")
 
 
 win = TreeViewFilterWindow()
