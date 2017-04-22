@@ -17,18 +17,15 @@ __email__ = "systemofdown@gmail.com"
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib, GObject
 import subprocess
+from subprocess import Popen
 import os
-import getpass
 
-user = getpass.getuser()
 display = os.environ['DISPLAY']
-
-timer_list = [i for i in os.listdir(
-    '/home/' + user + '/.local/share/systemd/user') if '.timer' in i]
-
-systemd_path = os.path.join('/home/' + user + '/.local/share/systemd/user/')
+user_data_dir = GLib.get_user_data_dir()
+systemd_path = os.path.join(user_data_dir + '/systemd/user/')
+systemd_path_list = [f for f in os.listdir(systemd_path) if '.timer' in f]
 
 
 def systemctl(action, unit):
@@ -73,7 +70,7 @@ def get_execstart(unit):
 
 def systemd_files(systemd_list):
 
-    for i in timer_list:
+    for i in systemd_path_list:
         systemd_list.append((str(i.partition('.timer')[0]),
                              str(systemctl('is-active', i)[0]
                                  ).partition("b'")[2].partition("\\")[0],
@@ -215,7 +212,6 @@ class Assistant(Gtk.Assistant):
         self.set_page_complete(box, True)
 
     def on_apply_clicked(self, *args):
-        file_location = os.path.join('/home/' + user + '/.local/share/systemd/user/')
         description_timer = self.description_timer.get_text()
         description_service = self.description_command.get_text()
         execstart = self.command.get_text()
@@ -225,7 +221,7 @@ class Assistant(Gtk.Assistant):
         time = self.time.get_text()
         content = systemd_timer(description_timer, description_service, display,
                                 service_type, execstart, time)
-        self.label.set_text(file_location + '\n' + service_filename + content[0] + '\n' +
+        self.label.set_text(systemd_path + '\n' + service_filename + content[0] + '\n' +
                             timer_filename + content[1])
         systemd_save(content, self.filename.get_text(),
                      self.filename.get_text())
@@ -334,10 +330,10 @@ class TreeViewFilterWindow(Gtk.Window):
             systemctl('disable', selected + ".timer")
 
         if button == "Edit Timer":
-            subprocess.Popen(['xdg-open', os.path.join(sysgtemd_path, selected + ".timer")])
+            Popen(['xdg-open', os.path.join(systemd_path, selected + ".timer")])
 
         if button == "Edit Service":
-            subprocess.Popen(['xdg-open', os.path.join(systemd_path, selected + ".service")])
+            Popen(['xdg-open', os.path.join(systemd_path, selected + ".service")])
 
         if button == "Remove":
             if self.treeiter != None:
