@@ -17,7 +17,7 @@ __email__ = "systemofdown@gmail.com"
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, GObject
+from gi.repository import Gtk, GLib, GObject, Gio
 import subprocess
 from subprocess import Popen
 import os
@@ -42,6 +42,23 @@ def systemctl(action, unit):
     return outputCMD.stdout.readlines()
 
 
+def parse_file(unit, string):
+    if unit is not None:
+        if unit.partition('.')[-1] == 'timer':
+            unit = systemd_path + unit
+            # convert to unit.service
+        else:
+            unit = systemd_path + unit.partition('.')[0] + '.service'
+    else:
+        return
+
+    with open(unit, 'r', encoding="utf-8") as f:
+        for i in f.readlines():
+            if string in i:
+                print(i.partition(string + '=')[-1])
+                return i.partition(string + '=')[-1].rstrip()
+
+
 def get_description(unit):
     # unit.timer
     if unit.partition('.') == 'timer':
@@ -53,7 +70,7 @@ def get_description(unit):
     with open(unit, 'r', encoding="utf-8") as f:
         for i in f.readlines():
             if 'Description' in i:
-                return i.partition('Description=')[-1]
+                return i.partition('Description=')[-1].rstrip()
 
 
 def get_calendar(unit):
@@ -61,20 +78,15 @@ def get_calendar(unit):
     with open(timer, 'r', encoding="utf-8") as f:
         for i in f.readlines():
             if 'OnCalendar' in i:
-                return i.partition('OnCalendar=')[-1]
+                return i.partition('OnCalendar=')[-1].rstrip()
 
 
 def get_execstart(unit):
-                # unit.timer
-    if unit.partition('.') == 'timer':
-        unit = systemd_path + unit
-        # convert to unit.service
-    else:
-        unit = systemd_path + unit.partition('.')[0] + '.service'
+    unit = systemd_path + unit.partition('.')[0] + '.service'
     with open(unit, 'r', encoding="utf-8") as f:
         for i in f.readlines():
             if 'ExecStart' in i:
-                return i.partition('ExecStart=')[-1]
+                return i.partition('ExecStart=')[-1].rstrip()
 
 
 def systemd_files(systemd_list):
@@ -137,6 +149,141 @@ def systemd_timer(description_time, description_service, display,
     return service, timer
 
 
+class AssistantEditor(Gtk.Assistant):
+
+    def __init__(self):
+        Gtk.Assistant.__init__(self)
+        self.set_title("Assistant")
+        self.set_default_size(570, 50)
+        self.connect("cancel", self.on_cancel_clicked)
+        self.connect("close", self.on_close_clicked)
+        self.connect("apply", self.on_apply_clicked)
+
+        # unit.timer unit.service from selected row in Assistant
+        self.unit_timer = win.unit_timer_record
+        self.unit_service = win.unit_service_record
+
+        # timer Page
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.INTRO)
+        self.set_page_title(box, "Timer")
+        self.description_timer = Gtk.Entry()
+        desc = parse_file(self.unit_timer, "Description")
+        print(desc)
+        self.description_timer.set_text(desc)
+        self.filename = Gtk.Entry()
+        self.filename.set_text(self.unit_timer.split(".timer")[0])
+        label = Gtk.Label(label="filename: <foobar> will result foobar.timer\n"
+                          "Description: description for foobar.timer")
+        label.set_line_wrap(True)
+        box.pack_start(label, True, True, 0)
+        box.pack_start(self.description_timer, True, True, 0)
+        box.pack_start(self.filename, True, True, 0)
+        self.set_page_complete(box, True)
+
+        # calendar page
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
+        self.set_page_title(box, "Calendar")
+        self.time = Gtk.Entry()
+        calendar = parse_file(self.unit_timer, "OnCalendar")
+        print(calendar)
+        self.time.set_text(calendar)
+        label_timespan = Gtk.Label()
+        label_timespan.set_markup("Examples for valid time span specifications:\n"
+                                  "'*-*-* *:*:05 = every 5 minutes'\n"
+                                  "'*-*-* *:05:00 = every 5 hours'\n"
+                                  "'*-*-* 05:00:00 = every 5 days'\n"
+                                  "'minutely', 'hourly', 'daily', 'monthly', 'weekly'\n"
+                                  "2 h 2hours 48hr 1y 12month 55s500ms 300ms20s 5day\n"
+                                  "for more help visit <a href=\"https://www.freedesktop.org/software/systemd/man/systemd.time.html\" "
+                                  "title=\"Click to find out more\">freedesktop</a>.")
+        label_timespan.set_line_wrap(True)
+        box.pack_start(label_timespan, True, True, 0)
+        box.pack_start(self.time, True, True, 0)
+        self.set_page_complete(box, True)
+
+        # command page
+        self.complete = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(self.complete)
+        self.set_page_type(self.complete, Gtk.AssistantPageType.CONFIRM)
+        self.set_page_title(self.complete, "Command")
+        self.description_command = Gtk.Entry()
+        command_description = parse_file(self.unit_service, 'Description')
+        self.description_command.set_text(command_description)
+        self.command = Gtk.Entry()
+        command = parse_file(self.unit_service, 'ExecStart')
+        self.command.set_text(command)
+        label_service = Gtk.Label()
+        label_service.set_markup(
+            'Service Type: simple, notify, oneshot\n'
+            'For more information about Service Type visit: '
+            '<a href=\"https://www.freedesktop.org/software/systemd/man/systemd.service.html\"\n'
+            'title=\"Click to find out more\">freedesktop</a>.\n'
+            'Command: use full path, Example: /usr/bin/notify-send "Hello!"\n'
+            'Description: Command Description')
+
+        label_service.set_line_wrap(True)
+        self.service_type = Gtk.Entry()
+        self.service_type.set_text("simple")
+        self.complete.pack_start(label_service, True, True, 0)
+        self.complete.pack_start(self.service_type, True, True, 0)
+        self.complete.pack_start(self.command, True, True, 0)
+        self.complete.pack_start(self.description_command, True, True, 0)
+        self.set_page_complete(self.complete, True)
+
+        # summary page
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.SUMMARY)
+        self.set_page_title(box, "Summary")
+        self.label = Gtk.Label(label="")
+        label.set_line_wrap(True)
+        box.pack_start(self.label, True, True, 0)
+        self.set_page_complete(box, True)
+
+    def on_apply_clicked(self, *args):
+        description_timer = self.description_timer.get_text()
+        description_service = self.description_command.get_text()
+        execstart = self.command.get_text()
+        service_type = self.service_type.get_text()
+        service_filename = self.filename.get_text() + '.service'
+        timer_filename = self.filename.get_text() + '.timer'
+        time = self.time.get_text()
+        content = systemd_timer(description_timer,
+                                description_service,
+                                display,
+                                service_type,
+                                execstart,
+                                time)
+        self.label.set_text(systemd_path + '\n'
+                            + service_filename
+                            + content[0] + '\n'
+                            + timer_filename
+                            + content[1])
+        systemd_save(content,
+                     self.filename.get_text(),
+                     self.filename.get_text())
+        systemd_list = []
+
+        # add new row
+        win.systemd_liststore.append(
+            systemd_new_file(systemd_list, timer_filename)[0])
+
+    def on_close_clicked(self, *args):
+        Gtk.Assistant.hide_on_delete(self)
+
+    def on_cancel_clicked(self, *args):
+        # the row selected is deleted because after apply it will create another row
+        # then in case the user cancel the dialog it will restore the row again
+        systemd_list = []
+        win.systemd_liststore.append(
+            systemd_new_file(systemd_list, self.unit_timer)[0])
+        Gtk.Assistant.hide_on_delete(self)
+
+
 class Assistant(Gtk.Assistant):
 
     def __init__(self):
@@ -173,9 +320,9 @@ class Assistant(Gtk.Assistant):
         self.time.set_text("*-*-* *:*:5")
         label_timespan = Gtk.Label()
         label_timespan.set_markup("Examples for valid time span specifications:\n"
-                                  "'*-*-* *:*:5 = every 5 minutes'\n"
-                                  "'*-*-* *:5:00 = every 5 hours'\n"
-                                  "'*-*-* 5:00:00 = every 5 days'\n"
+                                  "'*-*-* *:*:05 = every 5 minutes'\n"
+                                  "'*-*-* *:05:00 = every 5 hours'\n"
+                                  "'*-*-* 05:00:00 = every 5 days'\n"
                                   "'minutely', 'hourly', 'daily', 'monthly', 'weekly'\n"
                                   "2 h 2hours 48hr 1y 12month 55s500ms 300ms20s 5day\n"
                                   "for more help visit <a href=\"https://www.freedesktop.org/software/systemd/man/systemd.time.html\" "
@@ -245,6 +392,7 @@ class Assistant(Gtk.Assistant):
                      self.filename.get_text(),
                      self.filename.get_text())
         systemd_list = []
+
         win.systemd_liststore.append(
             systemd_new_file(systemd_list, timer_filename)[0])
 
@@ -293,15 +441,18 @@ class TreeViewFilterWindow(Gtk.Window):
             column = Gtk.TreeViewColumn(column_title, renderer, text=i)
             self.treeview.append_column(column)
             self.buttons = list()
-        for prog_language in ["New",
-                              "Start",
-                              "Stop",
-                              "Enable",
-                              "Disable",
-                              "Edit Timer",
-                              "Edit Service",
-                              "Remove"]:
-            button = Gtk.Button(prog_language)
+        for label in ["New",
+                      "Start",
+                      "Stop",
+                      "Enable",
+                      "Disable",
+                      "Edit",
+                      "Remove"]:
+            button = Gtk.Button()
+            #image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.BUTTON)
+            # button.add(image)
+            button.set_label(label)
+            button.set_always_show_image(True)
             self.buttons.append(button)
             button.connect("clicked", self.on_selection_button_clicked)
         # setting up the layout, putting the treeview in a scrollwindow, and the buttons in a row
@@ -320,8 +471,7 @@ class TreeViewFilterWindow(Gtk.Window):
         self.model, self.treeiter = selection.get_selected()
         path = self.model.get_path(self.treeiter)
         if self.treeiter != None:
-            global selected
-            selected = self.model[self.treeiter][0]
+            self.selected = self.model[self.treeiter][0]
 
     def language_filter_func(self, model, iter, data):
         """Tests if the language in the row is the one in the filter"""
@@ -337,43 +487,50 @@ class TreeViewFilterWindow(Gtk.Window):
             assistant.show_all()
 
         if button == "Stop":
-            systemctl('stop', selected + ".timer")
-            status = str(systemctl('is-active', selected + '.timer')
+            systemctl('stop', self.selected + ".timer")
+            status = str(systemctl('is-active', self.selected + '.timer')
                          [0]).partition("b'")[2].partition("\\")[0]
             model, treeiter = self.treeview.get_selection().get_selected()
             if treeiter != None:
                 model[treeiter][1] = status
 
         if button == "Start":
-            systemctl('start', selected + ".timer")
-            status = str(systemctl('is-active', selected + '.timer')
+            systemctl('start', self.selected + ".timer")
+            status = str(systemctl('is-active', self.selected + '.timer')
                          [0]).partition("b'")[2].partition("\\")[0]
             model, treeiter = self.treeview.get_selection().get_selected()
             if treeiter != None:
                 model[treeiter][1] = status
 
         if button == "Enable":
-            systemctl('enable', selected + ".timer")
+            systemctl('enable', self.selected + ".timer")
 
         if button == "Disable":
-            systemctl('disable', selected + ".timer")
+            systemctl('disable', self.selected + ".timer")
 
-        if button == "Edit Timer":
-            Popen(['xdg-open', os.path.join(systemd_path, selected + ".timer")])
+        if button == "Edit":
+            # record last selection
+            self.unit_timer_record = self.selected + '.timer'
+            self.unit_service_record = self.selected + '.service'
+            # remove selected row
+            if self.treeiter != None:
+                path = self.model.get_path(self.treeiter)
+                self.systemd_liststore.remove(self.systemd_liststore[path].iter)
+            assistanteditor = AssistantEditor()
+            assistanteditor.show_all()
 
-        if button == "Edit Service":
-            Popen(['xdg-open', os.path.join(systemd_path, selected + ".service")])
+            # Popen(['xdg-open', os.path.join(systemd_path, self.selected + ".timer")])
 
         if button == "Remove":
-            os.remove(os.path.join(systemd_path, selected + ".service"))
-            os.remove(os.path.join(systemd_path, selected + ".timer"))
+            os.remove(os.path.join(systemd_path, self.selected + ".service"))
+            os.remove(os.path.join(systemd_path, self.selected + ".timer"))
+            systemctl('disable', self.selected + ".timer")
             if self.treeiter != None:
                 path = self.model.get_path(self.treeiter)
                 # liststore starts with 1 and path list with 0
 
                 row_path = path.get_indices()[0] + 1
                 self.systemd_liststore.remove(self.systemd_liststore[path].iter)
-                systemctl('disable', selected + ".timer")
 
 
 win = TreeViewFilterWindow()
