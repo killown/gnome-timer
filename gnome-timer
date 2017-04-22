@@ -139,6 +139,7 @@ class Assistant(Gtk.Assistant):
         self.connect("close", self.on_close_clicked)
         self.connect("apply", self.on_apply_clicked)
 
+        # timer Page
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.INTRO)
@@ -153,9 +154,9 @@ class Assistant(Gtk.Assistant):
         box.pack_start(label, True, True, 0)
         box.pack_start(self.description_timer, True, True, 0)
         box.pack_start(self.filename, True, True, 0)
-
         self.set_page_complete(box, True)
 
+        # calendar page
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
@@ -176,6 +177,7 @@ class Assistant(Gtk.Assistant):
         box.pack_start(self.time, True, True, 0)
         self.set_page_complete(box, True)
 
+        # command page
         self.complete = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(self.complete)
         self.set_page_type(self.complete, Gtk.AssistantPageType.CONFIRM)
@@ -202,6 +204,7 @@ class Assistant(Gtk.Assistant):
         self.complete.pack_start(self.description_command, True, True, 0)
         self.set_page_complete(self.complete, True)
 
+        # summary page
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.SUMMARY)
@@ -219,14 +222,23 @@ class Assistant(Gtk.Assistant):
         service_filename = self.filename.get_text() + '.service'
         timer_filename = self.filename.get_text() + '.timer'
         time = self.time.get_text()
-        content = systemd_timer(description_timer, description_service, display,
-                                service_type, execstart, time)
-        self.label.set_text(systemd_path + '\n' + service_filename + content[0] + '\n' +
-                            timer_filename + content[1])
-        systemd_save(content, self.filename.get_text(),
+        content = systemd_timer(description_timer,
+                                description_service,
+                                display,
+                                service_type,
+                                execstart,
+                                time)
+        self.label.set_text(systemd_path + '\n'
+                            + service_filename
+                            + content[0] + '\n'
+                            + timer_filename
+                            + content[1])
+        systemd_save(content,
+                     self.filename.get_text(),
                      self.filename.get_text())
         systemd_list = []
-        win.systemd_liststore.append(systemd_new_file(systemd_list, timer_filename)[0])
+        win.systemd_liststore.append(
+            systemd_new_file(systemd_list, timer_filename)[0])
 
     def on_close_clicked(self, *args):
         Gtk.Assistant.hide_on_delete(self)
@@ -264,13 +276,23 @@ class TreeViewFilterWindow(Gtk.Window):
         self.select = self.treeview.get_selection()
         self.select.connect("changed", self.on_tree_selection_changed)
 
-        for i, column_title in enumerate(["Timer", "Status", "Description", "Calendar", "Command"]):
+        for i, column_title in enumerate(["Timer",
+                                          "Status",
+                                          "Description",
+                                          "Calendar",
+                                          "Command"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(column_title, renderer, text=i)
             self.treeview.append_column(column)
-        # creating buttons to filter by programming language, and setting up their events
-        self.buttons = list()
-        for prog_language in ["New", "Start", "Stop", "Enable", "Disable", "Edit Timer", "Edit Service", "Remove"]:
+            self.buttons = list()
+        for prog_language in ["New",
+                              "Start",
+                              "Stop",
+                              "Enable",
+                              "Disable",
+                              "Edit Timer",
+                              "Edit Service",
+                              "Remove"]:
             button = Gtk.Button(prog_language)
             self.buttons.append(button)
             button.connect("clicked", self.on_selection_button_clicked)
@@ -300,8 +322,6 @@ class TreeViewFilterWindow(Gtk.Window):
             return model[iter][2] == self.current_filter_language
 
     def on_selection_button_clicked(self, widget):
-        """Called on any of the button clicks"""
-        # we set the current language filter to the button's label
         button = widget.get_label()
         if button == "New":
             assistant = Assistant()
