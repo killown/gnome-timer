@@ -74,9 +74,11 @@ def systemd_files(systemd_list):
     for unit in systemd_timer_list:
 
         filename = str(unit.partition('.timer')[0])
-        isactive = str(systemctl('is-active', unit.partition(".")[0])[0]
-                       ).partition("b'")[2].partition("\\")[0]
+        isactive = str(systemctl('is-active', unit)
+                       [0]).partition("b'")[2].partition("\\")[0]
         description = str(parse_file(unit, 'Description')).rstrip()
+        isenabled = str(systemctl('is-enabled', unit.partition(".")[0] + ".service")
+                        [0]).partition("b'")[2].partition("\\")[0]
         time = str(parse_file(unit, 'OnCalendar')).rstrip()
         time_mode = "Calendar"
         if check_string(unit, 'OnUnitActiveSec'):
@@ -84,7 +86,8 @@ def systemd_files(systemd_list):
             time_mode = "Restart"
         execstart = str(parse_file(unit.partition('.')[0] + '.service', 'ExecStart')).rstrip()
 
-        systemd_list.append((filename, isactive, description, time, execstart, time_mode))
+        systemd_list.append((filename, isactive, isenabled,
+                             time, description, time_mode,  execstart))
         print(parse_file(unit, 'Description'), 'eae', unit)
 
     return systemd_list
@@ -92,9 +95,11 @@ def systemd_files(systemd_list):
 
 def systemd_new_file(systemd_list, unit):
     filename = str(unit.partition('.timer')[0])
-    isactive = str(systemctl('is-active', unit.partition(".")[0])[0]
-                   ).partition("b'")[2].partition("\\")[0]
+    isactive = str(systemctl('is-active', unit)
+                   [0]).partition("b'")[2].partition("\\")[0]
     description = str(parse_file(unit, 'Description')).rstrip()
+    isenabled = str(systemctl('is-enabled', unit.partition(".")[0] + ".service")
+                    [0]).partition("b'")[2].partition("\\")[0]
     time = str(parse_file(unit, 'OnCalendar')).rstrip()
     time_mode = "Calendar"
     if check_string(unit, 'OnUnitActiveSec'):
@@ -102,9 +107,9 @@ def systemd_new_file(systemd_list, unit):
         time_mode = "Restart"
     execstart = str(parse_file(unit.partition('.')[0] + '.service', 'ExecStart')).rstrip()
 
-    systemd_list.append((filename, isactive, description, time, execstart, time_mode))
+    systemd_list.append((filename, isactive, isenabled,
+                         time, description, time_mode,  execstart))
     print(parse_file(unit, 'Description'), 'eae', unit)
-
     return systemd_list
 
 
@@ -139,10 +144,10 @@ def systemd_timer(description_time, description_service, display,
 
     [Timer]
     Persistent=true
-    OnBootSec=1s
-    {1}
+    OnBootSec={1}
+    {2}
     [Install]
-    WantedBy=default.target""".format(description_time, time)
+    WantedBy=default.target""".format(description_time, time.partition("=")[-1], time)
     return service, timer
 
 
@@ -339,7 +344,7 @@ class TreeViewFilterWindow(Gtk.Window):
         self.add(self.grid)
 
         # Creating the ListStore model
-        self.systemd_liststore = Gtk.ListStore(str, str, str, str, str, str)
+        self.systemd_liststore = Gtk.ListStore(str, str, str, str, str, str, str)
         systemd_list = []
         for list_ref in systemd_files(systemd_list):
             self.systemd_liststore.append(list(list_ref))
@@ -352,15 +357,17 @@ class TreeViewFilterWindow(Gtk.Window):
 
         # creating the treeview, making it use the filter as a model, and adding the columns
         self.treeview = Gtk.TreeView.new_with_model(self.language_filter)
+        self.treeview.set_reorderable(True)
         self.select = self.treeview.get_selection()
         self.select.connect("changed", self.on_tree_selection_changed)
 
-        for i, column_title in enumerate(["Timer",
+        for i, column_title in enumerate(["Unit",
                                           "Status",
-                                          "Description",
+                                          "AutoStart",
                                           "Date & Time",
-                                          "Service",
-                                          "Mode"]):
+                                          "Description",
+                                          "Mode",
+                                          "Service"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(column_title, renderer, text=i)
             self.treeview.append_column(column)
@@ -375,7 +382,7 @@ class TreeViewFilterWindow(Gtk.Window):
                       "Help"]:
             button = Gtk.Button()
             button.set_label(label)
-            #image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.BUTTON)
+            # image = Gtk.Image.new_from_icon_name("media-playback-start", Gtk.IconSize.BUTTON)
             # button.add(image)
             button.set_always_show_image(True)
             self.buttons.append(button)
@@ -396,6 +403,10 @@ class TreeViewFilterWindow(Gtk.Window):
     def on_tree_selection_changed(self, selection):
         self.model, self.treeiter = selection.get_selected()
         path = self.model.get_path(self.treeiter)
+        tooltip = Gtk.Tooltip()
+        tooltip.set_text("Work?")
+        self.treeview.set_tooltip_row(tooltip, path)
+
         if self.treeiter != None:
             self.selected = self.model[self.treeiter][0]
 
@@ -424,6 +435,8 @@ class TreeViewFilterWindow(Gtk.Window):
 
         if button == "Start":
             print(self.selected, 'hahahahahahaha')
+            systemctl('stop', self.selected)
+            systemctl('stop', self.selected + ".timer")
             Popen(['systemctl', '--user', 'daemon-reload'])
             systemctl('start', self.selected)
             systemctl('start', self.selected + ".timer")
@@ -435,9 +448,19 @@ class TreeViewFilterWindow(Gtk.Window):
 
         if button == "Enable":
             systemctl('enable', self.selected)
+            status = str(systemctl('is-enabled', self.selected + ".service")
+                         [0]).partition("b'")[2].partition("\\")[0]
+            model, treeiter = self.treeview.get_selection().get_selected()
+            if treeiter != None:
+                model[treeiter][2] = status
 
         if button == "Disable":
             systemctl('disable', self.selected)
+            status = str(systemctl('is-enabled', self.selected + ".service")
+                         [0]).partition("b'")[2].partition("\\")[0]
+            model, treeiter = self.treeview.get_selection().get_selected()
+            if treeiter != None:
+                model[treeiter][2] = status
 
         if button == "Edit":
             self.edit_mode = True
