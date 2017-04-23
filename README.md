@@ -1,11 +1,14 @@
 # GNOME Timer
 
-GNOME timer has systemd timers as backend
+GNOME timer is a front-end for systemd timers which can be used for an alarm clock or reminder
 
 what does it do?
-  - use systemd units in local user
-  - enable disable remove edit units
-  - advanced calendar, for more help visit [Freedesktop](https://www.freedesktop.org/software/systemd/man/systemd.time.html) or see Below
+  - use systemd as back-end
+  - enable, disable, remove and edit services
+  - timers run independently from GNOME timer
+  - persistent, which will trigger the associated unit when the timer becomes active if it would have been triggered during the period in which the timer was inactive.
+
+for more help visit [Freedesktop](https://www.freedesktop.org/software/systemd/man/systemd.time.html) or see Below
 
 
 # Help
