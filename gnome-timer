@@ -331,7 +331,7 @@ class TreeViewFilterWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="GNOME Timer")
         self.set_border_width(10)
-        self.set_default_size(1200, 50)
+        self.set_default_size(900, 50)
         # Setting up the self.grid in which the elements are to be positionned
         self.grid = Gtk.Grid()
         self.grid.set_column_homogeneous(True)
