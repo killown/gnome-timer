@@ -1,6 +1,6 @@
 # GNOME Timer
 
-GNOME timer is a front-end for systemd timers which can be used for an alarm clock or reminder
+GNOME timer is a front-end for systemd timers which can be used for alarm clock or reminder
 
 what does it do?
   - use systemd as back-end
