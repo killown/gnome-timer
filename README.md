@@ -1,5 +1,4 @@
 # GNOME Timer
- ![N|Solid](https://raw.githubusercontent.com/killown/gnome-timer/master/Images/gnome-timer.png)
 
 GNOME timer is a front-end for systemd timers which can be used for an alarm clock or reminder
 ![N|Solid](https://raw.githubusercontent.com/killown/gnome-timer/master/Images/screenshot.png)
