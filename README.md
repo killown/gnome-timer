@@ -10,7 +10,6 @@ what does it do?
 
 for more help visit [Freedesktop](https://www.freedesktop.org/software/systemd/man/systemd.time.html) or see Below
 
-
 # Help
 # Calendar Events
 
