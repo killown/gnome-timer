@@ -10,6 +10,7 @@ what does it do?
 
 for more help visit [Freedesktop](https://www.freedesktop.org/software/systemd/man/systemd.time.html) or see Below
 
+
 # Help
 # Calendar Events
 
@@ -32,7 +33,7 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
 
 # The special expressions
    "minutely", "hourly", "daily", "monthly", "weekly", "yearly", "quarterly", "semiannually"
-   which refer to "*-*-* *:*:00", "*-*-* *:00:00", "*-*-* 00:00:00", "*-*-01 00:00:00", "Mon *-*-* 00:00:00", "*-01-01 00:00:00", "*-01,04,07,10-01 00:00:00" and "*-01,07-01 00:00:00", respectively.
+   which refer to "*-*-* *:*:00", "*-*-* *:00:00", "*-*-* 00:00:00", "*-*-01 00:00:00", "Mon *-*-* 00:00:00", "*-01-01     00:00:00", "*-01,04,07,10-01 00:00:00" and "*-01,07-01 00:00:00", respectively.
 
 # Examples for valid timestamps and their normalized form
 
