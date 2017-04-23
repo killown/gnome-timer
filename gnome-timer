@@ -380,6 +380,7 @@ class TreeViewFilterWindow(Gtk.Window):
             button.set_always_show_image(True)
             self.buttons.append(button)
             button.connect("clicked", self.on_selection_button_clicked)
+
         # setting up the layout, putting the treeview in a scrollwindow, and the buttons in a row
         self.scrollable_treelist = Gtk.ScrolledWindow()
         self.scrollable_treelist.set_vexpand(True)
@@ -463,6 +464,9 @@ class TreeViewFilterWindow(Gtk.Window):
 
                 row_path = path.get_indices()[0] + 1
                 self.systemd_liststore.remove(self.systemd_liststore[path].iter)
+
+        if button == "Help":
+            Popen(['xdg-open', 'https://github.com/killown/gnome-timer/blob/master/README.md'])
 
 
 win = TreeViewFilterWindow()

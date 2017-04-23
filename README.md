@@ -2,6 +2,8 @@
 
 GNOME timer is a front-end for systemd timers which can be used for an alarm clock or reminder
 ![N|Solid](https://raw.githubusercontent.com/killown/gnome-timer/master/Images/screenshot.png)
+
+
 what does it do?
  - use systemd as back-end
  - enable, disable, remove and edit services
@@ -10,8 +12,6 @@ what does it do?
 
 for more help visit [Freedesktop](https://www.freedesktop.org/software/systemd/man/systemd.time.html) or see Below
 
-
-# Help
 # Calendar Events
 
 - Calendar events may be used to refer to one or more points in time in a single expression. They form a superset of the absolute timestamps.
