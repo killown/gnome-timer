@@ -33,7 +33,7 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
 
 # The special expressions
 
-timestamp    | normalized form
+expression   | normalized form
 ------------ | -------------------------
 minutelly    | \*-\*-\* \*:\*:00
 hourly       | \*-\*-\* \*:00:00
