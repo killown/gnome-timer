@@ -88,7 +88,8 @@ annually                    | \*-01-01 00:00:00
 
       2h 2hours  48hr  1y 12month  55s500ms 300ms20s 5day
 
-When parsing, systemd will accept the same time span syntax. Separating spaces may be omitted. The following time units are understood:
+When parsing, systemd will accept the same time span syntax. Separating spaces may be omitted.
+The following time units are understood
 
      usec, us
      msec, ms
