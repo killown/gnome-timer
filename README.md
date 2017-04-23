@@ -32,6 +32,7 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
 - A timezone specification is not expected, unless it is given as the literal string "UTC", or the local timezone, similar to the supported syntax of timestamps (see above). Non-local timezones except for UTC are not supported.
 
 # The special expressions
+
 |minutelly   |*-*-* *:*:00             |
 |------------|-------------------------|
 |hourly      |*-*-* *:00:00            |
