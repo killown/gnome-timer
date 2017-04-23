@@ -74,7 +74,7 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
 
 # issues
 - services doesn't start after boot?
--
+
           sudo loginctl enable-linger "$USER"
 what is linger?
 - Enable/disable user lingering for one or more users. If enabled for a specific user, a user manager is spawned for the user at boot and kept around after logouts. This allows users who are not logged in to run long-running services. Takes one or more user names or numeric UIDs as argument. If no argument is specified, enables/disables lingering for the user of the session of the caller.
