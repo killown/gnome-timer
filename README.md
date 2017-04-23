@@ -86,7 +86,7 @@ annually                    | \*-01-01 00:00:00
 # timestamps for restart mode
 - the restart mode refers to OnUnitActiveSec, the service will restart every N time
 
-       2 h 2hours  48hr  1y 12month  55s500ms 300ms20s 5day
+       2h 2hours  48hr  1y 12month  55s500ms 300ms20s 5day
 
 # issues
 - services doesn't start after boot?
