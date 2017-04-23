@@ -47,7 +47,7 @@ minutelly    |*-*-* *:*:00
 
 # Examples for valid timestamps and their normalized form
 
-|Sat,Thu,Mon..Wed,Sat..Sun   |Mon..Thu,Sat,Sun *-*-* 00:00:00|
+Examples for valid timestamps and their normalized form
 |----------------------------|--------------------------------|
 |Mon,Sun 12-*-* 2,1:23       |Mon,Sun 2012-*-* 01,02:23:00    |
 |Wed *-1                     |Wed *-*-01 00:00:00             |
