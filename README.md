@@ -32,8 +32,9 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
 - A timezone specification is not expected, unless it is given as the literal string "UTC", or the local timezone, similar to the supported syntax of timestamps (see above). Non-local timezones except for UTC are not supported.
 
 # The special expressions
-   "minutely", "hourly", "daily", "monthly", "weekly", "yearly", "quarterly", "semiannually"
-   which refer to "*-*-* *:*:00", "*-*-* *:00:00", "*-*-* 00:00:00", "*-*-01 00:00:00", "Mon *-*-* 00:00:00", "*-01-01     00:00:00", "*-01,04,07,10-01 00:00:00" and "*-01,07-01 00:00:00", respectively.
+          "minutely", "hourly", "daily", "monthly", "weekly", "yearly", "quarterly", "semiannually"
+          which refer to "*-*-* *:*:00", "*-*-* *:00:00", "*-*-* 00:00:00", "*-*-01 00:00:00",
+          "Mon *-*-* 00:00:00", "*-01-01 00:00:00", "*-01,04,07,10-01 00:00:00" and "*-01,07-01 00:00:00", respectively.
 
 # Examples for valid timestamps and their normalized form
 
