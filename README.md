@@ -92,15 +92,15 @@ Parsing Time Spans
 
 When parsing, systemd will accept the same time span syntax. Separating spaces may be omitted. The following time units are understood:
 
-      usec, us
-      msec, ms
-      seconds, second, sec, s
-      minutes, minute, min, m
-      hours, hour, hr, h
-      days, day, d
-      weeks, week, w
-      months, month, M (defined as 30.44 days)
-      years, year, y (defined as 365.25 days)
+     usec, us
+     msec, ms
+     seconds, second, sec, s
+     minutes, minute, min, m
+     hours, hour, hr, h
+     days, day, d
+     weeks, week, w
+     months, month, M (defined as 30.44 days)
+     years, year, y (defined as 365.25 days)
 
 # issues
 - services doesn't start after boot?
