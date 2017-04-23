@@ -33,7 +33,7 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
 
 # The special expressions
 
-form         | normalized form
+timestamp    | normalized form
 ------------ | -------------------------
 minutelly    | \*-\*-\* \*:\*:00
 hourly       | \*-\*-\* \*:00:00
@@ -48,7 +48,7 @@ semiannually | \*-01,07-01 00:00:00
 
 # Examples for valid timestamps and their normalized form
 
-abstract form               | normalized form
+timestamp                   | normalized form
 --------------------------- | ------------------------------
 Mon,Sun 12-\*-\* 2,1:23       | Mon,Sun 2012-\*-\* 01,02:23:00
 Wed \*-1                     | Wed \*-\*-01 00:00:00
