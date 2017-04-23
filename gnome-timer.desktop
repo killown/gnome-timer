@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Gnome Timer
+Comment=Manage your system tasks
+Icon=gnome-timer
+Exec=/usr/bin/gnome-timer
+NoDisplay=false
+Categories=System;System-Tools;
+StartupNotify=true
+Terminal=false
