@@ -32,7 +32,7 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
     "minutely", "hourly", "daily", "monthly", "weekly", "yearly", "quarterly", "semiannually"
     which refer to "*-*-* *:*:00", "*-*-* *:00:00", "*-*-* 00:00:00", "*-*-01 00:00:00", "Mon *-*-* 00:00:00", "*-01-01 00:00:00", "*-01,04,07,10-01 00:00:00" and "*-01,07-01 00:00:00", respectively.
 
- # Examples for valid timestamps and their normalized form:
+ # Examples for valid timestamps and their normalized form
 
     Sat,Thu,Mon..Wed,Sat..Sun → Mon..Thu,Sat,Sun *-*-* 00:00:00
     Mon,Sun 12-*-* 2,1:23 → Mon,Sun 2012-*-* 01,02:23:00
