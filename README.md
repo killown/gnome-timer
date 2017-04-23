@@ -11,28 +11,28 @@ what does it do?
 # Help
 # Calendar Events
 
-Calendar events may be used to refer to one or more points in time in a single expression. They form a superset of the absolute timestamps explained above:
+- Calendar events may be used to refer to one or more points in time in a single expression. They form a superset of the absolute timestamps.
 
-    Thu,Fri 2012-*-1,5 11:12:13
+      Thu,Fri 2017-*-1,5 11:12:13
 The above refers to 11:12:13 of the first or fifth day of any month of the year 2012, but only if that day is a Thursday or Friday.
 
-The weekday specification is optional. If specified, it should consist of one or more English language weekday names, either in the abbreviated (Wed) or non-abbreviated (Wednesday) form (case does not matter), separated by commas. Specifying two weekdays separated by ".." refers to a range of continuous weekdays. "," and ".." may be combined freely.
+- The weekday specification is optional. If specified, it should consist of one or more English language weekday names, either in the abbreviated (Wed) or non-abbreviated (Wednesday) form (case does not matter), separated by commas. Specifying two weekdays separated by ".." refers to a range of continuous weekdays. "," and ".." may be combined freely.
 
-In the date and time specifications, any component may be specified as "*" in which case any value will match. Alternatively, each component can be specified as a list of values separated by commas. Values may be suffixed with "/" and a repetition value, which indicates that the value itself and the value plus all multiples of the repetition value are matched. Two values separated by ".." may be used to indicate a range of values; ranges may also be followed with "/" and a repetition value.
+- In the date and time specifications, any component may be specified as "*" in which case any value will match. Alternatively, each component can be specified as a list of values separated by commas. Values may be suffixed with "/" and a repetition value, which indicates that the value itself and the value plus all multiples of the repetition value are matched. Two values separated by ".." may be used to indicate a range of values; ranges may also be followed with "/" and a repetition value.
 
-A date specification may use "~" to indicate the last day(s) in a month. For example, "*-02~03" means "the third last day in February," and "Mon *-05~07/1" means "the last Monday in May."
+- A date specification may use "~" to indicate the last day(s) in a month. For example, "*-02~03" means "the third last day in February," and "Mon *-05~07/1" means "the last Monday in May."
 
-The seconds component may contain decimal fractions both in the value and the repetition. All fractions are rounded to 6 decimal places.
+- The seconds component may contain decimal fractions both in the value and the repetition. All fractions are rounded to 6 decimal places.
 
-Either time or date specification may be omitted, in which case the current day and 00:00:00 is implied, respectively. If the second component is not specified, ":00" is assumed.
+- Either time or date specification may be omitted, in which case the current day and 00:00:00 is implied, respectively. If the second component is not specified, ":00" is assumed.
 
-A timezone specification is not expected, unless it is given as the literal string "UTC", or the local timezone, similar to the supported syntax of timestamps (see above). Non-local timezones except for UTC are not supported.
+- A timezone specification is not expected, unless it is given as the literal string "UTC", or the local timezone, similar to the supported syntax of timestamps (see above). Non-local timezones except for UTC are not supported.
 
-  # The special expressions
+# The special expressions
     "minutely", "hourly", "daily", "monthly", "weekly", "yearly", "quarterly", "semiannually"
     which refer to "*-*-* *:*:00", "*-*-* *:00:00", "*-*-* 00:00:00", "*-*-01 00:00:00", "Mon *-*-* 00:00:00", "*-01-01 00:00:00", "*-01,04,07,10-01 00:00:00" and "*-01,07-01 00:00:00", respectively.
 
- # Examples for valid timestamps and their normalized form
+ # Examples for valid timestamps and their normalized form:
 
     Sat,Thu,Mon..Wed,Sat..Sun → Mon..Thu,Sat,Sun *-*-* 00:00:00
     Mon,Sun 12-*-* 2,1:23 → Mon,Sun 2012-*-* 01,02:23:00
@@ -66,3 +66,15 @@ A timezone specification is not expected, unless it is given as the literal stri
     yearly → *-01-01 00:00:00
     annually → *-01-01 00:00:00
     *:2/3 → *-*-* *:02/3:00
+
+# timestamps for restart mode
+- the restart mode refers to OnUnitActiveSec, the service will restart every N time
+
+        2 h 2hours  48hr  1y 12month  55s500ms 300ms20s 5day
+
+# issues
+- services doesn't start after boot?
+-
+          sudo loginctl enable-linger "$USER"
+what is linger?
+- Enable/disable user lingering for one or more users. If enabled for a specific user, a user manager is spawned for the user at boot and kept around after logouts. This allows users who are not logged in to run long-running services. Takes one or more user names or numeric UIDs as argument. If no argument is specified, enables/disables lingering for the user of the session of the caller.
