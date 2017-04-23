@@ -33,9 +33,9 @@ The above refers to 11:12:13 of the first or fifth day of any month of the year 
 
 # The special expressions
 
-|            |                         |
+|    form    |    normalized form      |
 |------------|-------------------------|
-minutelly    |*-*-* *:*:00   
+|minutelly   |*-*-* *:*:00             |
 |hourly      |*-*-* *:00:00            |
 |daily       |*-*-* 00:00:0            |
 |monthly     |*-*-01 00:00:00          |
